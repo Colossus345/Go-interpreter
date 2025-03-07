@@ -1,6 +1,5 @@
 package token
 
-
 type TokenType string
 
 var keywords = map[string]TokenType{
@@ -44,6 +43,9 @@ const (
 
 	LTE = "<="
 	GTE = ">="
+
+	EQ     = "=="
+	NOT_EQ = "!="
 	// Delimiters
 	COMMA     = ","
 	SEMICOLON = ";"

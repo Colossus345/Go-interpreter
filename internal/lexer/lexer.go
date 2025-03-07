@@ -31,6 +31,13 @@ func (l *Lexer) readChar() {
 	l.position = l.readPosition
 	l.readPosition += 1
 }
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.readPosition]
+	}
+}
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
@@ -38,7 +45,12 @@ func (l *Lexer) NextToken() token.Token {
 	switch l.ch {
 	case '=':
 		{
-			tok = newToken(token.ASSIGN, l.ch)
+			if l.peekChar() == '=' {
+				l.readChar()
+				tok = newCompositeToken(token.EQ, "==")
+			} else {
+				tok = newToken(token.ASSIGN, l.ch)
+			}
 		}
 	case '+':
 		{
@@ -58,15 +70,30 @@ func (l *Lexer) NextToken() token.Token {
 		}
 	case '>':
 		{
-			tok = newToken(token.GT, l.ch)
+			if l.peekChar() == '=' {
+				l.readChar()
+				tok = newCompositeToken(token.GTE, ">=")
+			} else {
+				tok = newToken(token.GT, l.ch)
+			}
 		}
 	case '<':
 		{
-			tok = newToken(token.LT, l.ch)
+			if l.peekChar() == '=' {
+				l.readChar()
+				tok = newCompositeToken(token.LTE, "<=")
+			} else {
+				tok = newToken(token.LT, l.ch)
+			}
 		}
 	case '!':
 		{
-			tok = newToken(token.BANG, l.ch)
+			if l.peekChar() == '=' {
+				l.readChar()
+				tok = newCompositeToken(token.NOT_EQ, "!=")
+			} else {
+				tok = newToken(token.BANG, l.ch)
+			}
 		}
 	case '*':
 		{
@@ -114,6 +141,9 @@ func (l *Lexer) NextToken() token.Token {
 
 func newToken(tkn token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tkn, Literal: string(ch)}
+}
+func newCompositeToken(tkn token.TokenType, s string) token.Token {
+	return token.Token{Type: tkn, Literal: s}
 }
 func isLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
