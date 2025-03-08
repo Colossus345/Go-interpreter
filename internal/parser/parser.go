@@ -30,12 +30,12 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 	for p.curToken.Type != token.EOF {
-		stmt := p.parseStatement()
+		stmt, err := p.parseStatement()
 		///
 		/// Даже если я возвращаю нил но т.к это емое интерфейс
 		/// он дополняется тупорылая проверка не прокнет
-		///
-		if stmt != nil {
+		/// stmt != nil GOVNO
+		if err == nil {
 			program.Statements = append(program.Statements, stmt)
 		}
 		p.nextToken()
@@ -43,28 +43,28 @@ func (p *Parser) ParseProgram() *ast.Program {
 	return program
 }
 
-func (p *Parser) parseStatement() ast.Statement {
+func (p *Parser) parseStatement() (ast.Statement, error) {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
 	default:
-		return nil
+		return nil, nil
 	}
 }
-func (p *Parser) parseLetStatement() *ast.LetStatement {
+func (p *Parser) parseLetStatement() (*ast.LetStatement, error) {
 	stmt := &ast.LetStatement{Token: p.curToken}
 
-	if !p.expectPeek(token.ASSIGN) {
-		return nil
+	if !p.expectPeek(token.IDENT) {
+		return nil, fmt.Errorf("Not a Identifier")
 	}
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 	if !p.expectPeek(token.ASSIGN) {
-		return nil
+		return nil, fmt.Errorf("Not a assign")
 	}
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
-	return stmt
+	return stmt, nil
 }
 
 func (p *Parser) curTokenIs(t token.TokenType) bool {
