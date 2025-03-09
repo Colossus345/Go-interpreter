@@ -41,6 +41,10 @@ type Identifier struct {
 	Token token.Token
 	Value string
 }
+type IntegerLiteral struct {
+	Token token.Token
+	Value int64
+}
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -101,3 +105,8 @@ func (id *Identifier) state()               {}
 func (id *Identifier) express()             {}
 func (id *Identifier) TokenLiteral() string { return id.Token.Literal }
 func (id *Identifier) String() string       { return id.Value }
+
+func (id *IntegerLiteral) state()               {}
+func (id *IntegerLiteral) express()             {}
+func (id *IntegerLiteral) TokenLiteral() string { return id.Token.Literal }
+func (id *IntegerLiteral) String() string       { return id.Token.Literal }

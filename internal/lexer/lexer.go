@@ -22,7 +22,6 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 func (l *Lexer) readChar() {
-
 	if l.readPosition >= len(l.input) {
 		l.ch = 0
 	} else {
@@ -31,6 +30,7 @@ func (l *Lexer) readChar() {
 	l.position = l.readPosition
 	l.readPosition += 1
 }
+
 func (l *Lexer) peekChar() byte {
 	if l.readPosition >= len(l.input) {
 		return 0
