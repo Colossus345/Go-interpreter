@@ -1,9 +1,13 @@
 package ast
 
-import "inter-median/internal/token"
+import (
+	"inter-median/internal/token"
+	"strings"
+)
 
 type Node interface {
 	TokenLiteral() string
+	String() string
 }
 type Statement interface {
 	Node
@@ -16,6 +20,14 @@ type Expression interface {
 
 type Program struct {
 	Statements []Statement
+}
+
+func (p *Program) String() string {
+	var out strings.Builder
+	for _, s := range p.Statements {
+		out.WriteString(s.String())
+	}
+	return out.String()
 }
 
 func (p *Program) TokenLiteral() string {
@@ -35,8 +47,57 @@ type LetStatement struct {
 	Value Expression
 }
 
+type ReturnStatement struct {
+	Token       token.Token
+	ReturnValue Expression
+}
+
+type ExpressionStatement struct {
+	Token      token.Token
+	Expression Expression
+}
+
+func (es *ExpressionStatement) state()               {}
+func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String()
+	}
+	return ""
+}
+
 func (ls *LetStatement) state()               {}
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
+func (ls *LetStatement) String() string {
 
+	var out strings.Builder
+
+	out.WriteString(ls.TokenLiteral())
+	out.WriteString(" ")
+	out.WriteString(ls.Name.String())
+	out.WriteString(" = ")
+
+	if ls.Value != nil {
+		out.WriteString(ls.Value.String())
+	}
+	out.WriteRune(';')
+
+	return out.String()
+}
+func (ls *ReturnStatement) state()               {}
+func (ls *ReturnStatement) TokenLiteral() string { return ls.Token.Literal }
+func (ls *ReturnStatement) String() string {
+	var out strings.Builder
+	out.WriteString(ls.TokenLiteral())
+	out.WriteString(" ")
+	if ls.ReturnValue != nil {
+		out.WriteString(ls.ReturnValue.String())
+	}
+	out.WriteRune(';')
+
+	return out.String()
+}
 func (id *Identifier) state()               {}
+func (id *Identifier) express()             {}
 func (id *Identifier) TokenLiteral() string { return id.Token.Literal }
+func (id *Identifier) String() string       { return id.Value }

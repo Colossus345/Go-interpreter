@@ -6,9 +6,84 @@ import (
 	"testing"
 )
 
+func TestIdentifierExpression(t *testing.T) {
+	input := "foobar;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough Statements got %d",
+			len(program.Statements))
+	}
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement got %T",
+			stmt)
+	}
+	ident, ok := stmt.Expression.(*ast.Identifier)
+	println(ident, ok, "nu")
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier got %T", ident)
+	}
+	if ident.Value != "foobar" {
+		t.Fatalf("ident.value is not foobar got=%s", ident.Value)
+	}
+
+	if ident.TokenLiteral() != "foobar" {
+		t.Fatalf("ident.TokenLiteral() is not foobar got=%s", ident.Value)
+	}
+
+}
+
+func TestReturnStatement(t *testing.T) {
+	input := `
+    return 5;
+    return  10;
+    return  83;
+    `
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	if program == nil {
+		t.Fatalf("ParseProgram return nil")
+
+	}
+	if len(program.Statements) != 3 {
+		t.Fatalf("program does not contain 3 statements got=%d",
+			len(program.Statements))
+
+	}
+	for _, stmt := range program.Statements {
+		rS, ok := stmt.(*ast.ReturnStatement)
+		if !ok {
+			t.Errorf("stmt not *ast.ReturnStatement. got %T", stmt)
+			continue
+		}
+		if rS.TokenLiteral() != "return" {
+			t.Errorf("wrong TokenLiteral expected 'return' got %q", rS.TokenLiteral())
+		}
+	}
+}
+
+func checkParserErrors(t *testing.T, p *Parser) {
+	errors := p.Errors()
+	if len(errors) == 0 {
+		return
+	}
+	t.Errorf("parser has %d errors", len(errors))
+	for _, msg := range errors {
+		t.Errorf("parser error %s", msg)
+	}
+	t.FailNow()
+}
 func TestLetStatement(t *testing.T) {
 	input := `
-    let x=5;
+    let x = 5;
     let y = 10;
     let foobar = 83;
     `
@@ -16,6 +91,7 @@ func TestLetStatement(t *testing.T) {
 	p := New(l)
 	program := p.ParseProgram()
 
+	checkParserErrors(t, p)
 	if program == nil {
 		t.Fatalf("ParseProgram return nil")
 

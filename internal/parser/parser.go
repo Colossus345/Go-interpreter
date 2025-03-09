@@ -7,21 +7,67 @@ import (
 	"inter-median/internal/token"
 )
 
+const (
+	_ int = iota
+	LOWEST
+	EQUALS
+	LESSGREATER
+	SUM
+	PRODUCT
+	PREFIX
+	CALL
+)
+
+type (
+	prefixParseFn func() ast.Expression
+	infixParseFn  func(ast.Expression) ast.Expression
+)
 type Parser struct {
 	l *lexer.Lexer
 
 	curToken  token.Token
 	peekToken token.Token
+
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
+
+	errors []string
 }
 
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l}
+	p := &Parser{l: l, errors: []string{}}
 
 	p.nextToken()
 	p.nextToken()
+
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
+
+	// p.infixParseFns = make(map[token.TokenType]infixParseFn)
+	// p.registerInfix(token.IDENT, p.parseIdentifier)
 
 	return p
 }
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+}
+func (p *Parser) registerPrefix(t token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[t] = fn
+}
+func (p *Parser) registerInfix(t token.TokenType, fn infixParseFn) {
+	p.infixParseFns[t] = fn
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+func (p *Parser) peekError(t token.TokenType) {
+	p.errors = append(p.errors,
+		fmt.Sprintf("expected token to be %s got %s instead",
+			t,
+			p.peekToken.Type))
+}
+
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
 	p.peekToken = p.l.NextToken()
@@ -35,7 +81,14 @@ func (p *Parser) ParseProgram() *ast.Program {
 		/// Даже если я возвращаю нил но т.к это емое интерфейс
 		/// он дополняется тупорылая проверка не прокнет
 		/// stmt != nil GOVNO
-		if err == nil {
+		/// Это нужно исключительно для отладки если я ошибся в необходимых
+		/// токенах
+
+		if err != nil {
+			fmt.Println("OSHIBKA", err)
+		}
+
+		if err == nil && stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
 		p.nextToken()
@@ -47,9 +100,40 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.RETURN:
+		return p.parseReturnStatement()
 	default:
-		return nil, nil
+		return p.parseExpressionStatement()
 	}
+}
+func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, error) {
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt, nil
+}
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
+		return nil
+	}
+	leftexp := prefix()
+
+	return leftexp
+}
+func (p *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
+	stmt := &ast.ReturnStatement{Token: p.curToken}
+
+	p.nextToken()
+
+	for !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt, nil
+
 }
 func (p *Parser) parseLetStatement() (*ast.LetStatement, error) {
 	stmt := &ast.LetStatement{Token: p.curToken}
@@ -79,5 +163,6 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 		p.nextToken()
 		return true
 	}
+	p.peekError(t)
 	return false
 }
