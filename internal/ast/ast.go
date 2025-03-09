@@ -60,6 +60,18 @@ type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression
 }
+type PrefixExpression struct {
+	Token    token.Token
+	Operator string
+	Right    Expression
+}
+
+type InfixExpression struct {
+	Token    token.Token
+	Left     Expression
+	Right    Expression
+	Operator string
+}
 
 func (es *ExpressionStatement) state()               {}
 func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
@@ -110,3 +122,33 @@ func (id *IntegerLiteral) state()               {}
 func (id *IntegerLiteral) express()             {}
 func (id *IntegerLiteral) TokenLiteral() string { return id.Token.Literal }
 func (id *IntegerLiteral) String() string       { return id.Token.Literal }
+
+func (pe *InfixExpression) state()               {}
+func (pe *InfixExpression) express()             {}
+func (pe *InfixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *InfixExpression) String() string {
+	var out strings.Builder
+
+	out.WriteByte('(')
+	out.WriteString(pe.Left.String())
+	out.WriteByte(' ')
+	out.WriteString(pe.Operator)
+	out.WriteByte(' ')
+	out.WriteString(pe.Right.String())
+	out.WriteByte(')')
+
+	return out.String()
+}
+func (pe *PrefixExpression) state()               {}
+func (pe *PrefixExpression) express()             {}
+func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PrefixExpression) String() string {
+	var out strings.Builder
+
+	out.WriteByte('(')
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String())
+	out.WriteByte(')')
+
+	return out.String()
+}
