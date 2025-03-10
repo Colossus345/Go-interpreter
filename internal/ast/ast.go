@@ -73,6 +73,10 @@ type InfixExpression struct {
 	Operator string
 }
 
+type Boolean struct{
+    Token token.Token
+    Value bool
+}
 func (es *ExpressionStatement) state()               {}
 func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
 func (es *ExpressionStatement) String() string {
@@ -139,6 +143,7 @@ func (pe *InfixExpression) String() string {
 
 	return out.String()
 }
+
 func (pe *PrefixExpression) state()               {}
 func (pe *PrefixExpression) express()             {}
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
@@ -152,3 +157,6 @@ func (pe *PrefixExpression) String() string {
 
 	return out.String()
 }
+func (b *Boolean) express() {}
+func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
+func (b *Boolean) String() string { return b.Token.Literal }

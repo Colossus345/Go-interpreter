@@ -12,6 +12,10 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		input    string
 		expected string
 	}{
+		{"true", "true"},
+		{"false", "false"},
+		{"3 > 5 == false", "((3 > 5) == false)"},
+		{"3 > 5 == true", "((3 > 5) == true)"},
 		{
 			"-a * b",
 			"((-a) * b)",
@@ -229,10 +233,29 @@ func testLiteralExpression(t *testing.T,
 		return testIntegerLiteral(t, exp, int64(v))
 	case string:
 		return testIdentifier(t, exp, v)
+	case bool:
+		return testBooleanLiteral(t, exp, v)
 
 	}
 	t.Errorf("type of exp not handled, got %T", exp)
 	return false
+}
+func testBooleanLiteral(t *testing.T, exp ast.Expression, val bool) bool {
+	bo, ok := exp.(*ast.Boolean)
+	if !ok {
+		t.Errorf("exp is not *ast.Boolean got=%T", bo)
+		return false
+	}
+	if bo.Value != val {
+		t.Errorf("exp is not the same bo %t value %t", bo.Value, val)
+		return false
+	}
+	if bo.TokenLiteral() != fmt.Sprintf("%t", val) {
+		t.Errorf("bo TokenLiteral not %t got %s", val, bo.TokenLiteral())
+		return false
+	}
+
+	return true
 }
 func testInfixExpression(t *testing.T,
 	exp ast.Expression,
