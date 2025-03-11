@@ -5,6 +5,8 @@ import (
 	"inter-median/internal/ast"
 	"inter-median/internal/lexer"
 	"inter-median/internal/token"
+	"reflect"
+	"runtime"
 	"strconv"
 )
 
@@ -56,8 +58,10 @@ func New(l *lexer.Lexer) *Parser {
 	p.nextToken()
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
-    p.registerPrefix(token.TRUE,p.parseBoolean)
-    p.registerPrefix(token.FALSE,p.parseBoolean)
+
+	p.registerPrefix(token.LPAREN, p.parseGroupExpression)
+	p.registerPrefix(token.TRUE, p.parseBoolean)
+	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
@@ -73,6 +77,16 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	return p
+}
+func (p *Parser) parseGroupExpression() ast.Expression {
+	p.nextToken()
+	exp := p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return exp
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
@@ -182,6 +196,10 @@ func (p *Parser) noPrefixParseFn(t token.TokenType) {
 	p.errors = append(p.errors,
 		fmt.Sprintf("no prefix parse func for %s found", t))
 }
+func GetFunctionName(i interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+}
+
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -256,5 +274,5 @@ func (p *Parser) peekPrecedence() int {
 	return LOWEST
 }
 func (p *Parser) parseBoolean() ast.Expression {
-    return &ast.Boolean{Token:p.curToken,Value: p.curTokenIs(token.TRUE)}
+	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }

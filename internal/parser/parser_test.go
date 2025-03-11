@@ -16,6 +16,11 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		{"false", "false"},
 		{"3 > 5 == false", "((3 > 5) == false)"},
 		{"3 > 5 == true", "((3 > 5) == true)"},
+
+		{"1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)"},
+		{"(5 + 5) * 2", "((5 + 5) * 2)"},
+		{"2 / (5 + 5)", "(2 / (5 + 5))"},
+		{"-(5 + 5)", "(-(5 + 5))"},
 		{
 			"-a * b",
 			"((-a) * b)",
@@ -83,10 +88,12 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 func TestParsingInfix(t *testing.T) {
 	infixTests := []struct {
 		input      string
-		leftValue  int64
+		leftValue  interface{}
 		operator   string
-		rightValue int64
+		rightValue interface{}
 	}{
+		{"true == true", true, "==", true},
+		{"true != false", true, "!=", false},
 		{"5 + 5;", 5, "+", 5},
 		{"5 - 5;", 5, "-", 5},
 		{"5 * 5;", 5, "*", 5},
@@ -120,10 +127,12 @@ func TestParsingInfix(t *testing.T) {
 }
 func TestParsingPrefix(t *testing.T) {
 	prefixTests := []struct {
-		input        string
-		operator     string
-		integerValue int64
+		input    string
+		operator string
+		value    interface{}
 	}{
+		{"!true", "!", true},
+		{"!false", "!", false},
 		{"!5", "!", 5},
 		{"-15", "-", 15},
 	}
@@ -143,16 +152,16 @@ func TestParsingPrefix(t *testing.T) {
 		}
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
 		if !ok {
-			t.Fatalf("stmt is not ast.PrefixExpression got=%T", stmt.Expression)
-		}
-		if exp.Operator != tt.operator {
-			t.Fatalf("exp.Operatotr is not '%s' got=%s", tt.operator,
-				exp.Operator)
-		}
-		if !testIntegerLiteral(t, exp.Right, tt.integerValue) {
-			return
+			t.Fatalf("expression is not a *ast.PrefixExpression got=%T", exp)
 		}
 
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp operator is not %s got=%s", exp.Operator, tt.operator)
+		}
+
+		if !testLiteralExpression(t, exp.Right, tt.value) {
+			return
+		}
 	}
 
 }
@@ -229,21 +238,23 @@ func testLiteralExpression(t *testing.T,
 	expected interface{}) bool {
 	switch v := expected.(type) {
 	case int:
+		return testIntegerLiteral(t, exp, int64(v))
 	case int64:
 		return testIntegerLiteral(t, exp, int64(v))
 	case string:
 		return testIdentifier(t, exp, v)
 	case bool:
 		return testBooleanLiteral(t, exp, v)
-
+	default:
+		t.Errorf("chzh type of exp not handled, got %T type %T", exp, expected)
 	}
-	t.Errorf("type of exp not handled, got %T", exp)
+	t.Errorf("type of exp not handled, got %T type %T", exp, expected)
 	return false
 }
 func testBooleanLiteral(t *testing.T, exp ast.Expression, val bool) bool {
 	bo, ok := exp.(*ast.Boolean)
 	if !ok {
-		t.Errorf("exp is not *ast.Boolean got=%T", bo)
+		t.Errorf("exp is not *ast.Boolean got=%T %s", exp, exp.String())
 		return false
 	}
 	if bo.Value != val {
