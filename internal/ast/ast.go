@@ -37,6 +37,47 @@ func (p *Program) TokenLiteral() string {
 	return ""
 }
 
+type IfExpression struct {
+	Token       token.Token
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
+}
+
+func (ie *IfExpression) express()             {}
+func (ie *IfExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *IfExpression) String() string {
+	var out strings.Builder
+
+	out.WriteString("if")
+	out.WriteString(ie.Condition.String())
+	out.WriteString(" ")
+	out.WriteString(ie.Consequence.String())
+	if ie.Alternative != nil {
+		out.WriteString("else ")
+		out.WriteString(ie.Alternative.String())
+	}
+	return out.String()
+}
+func (bl *BlockStatement) state() {}
+func (bl *BlockStatement) TokenLiteral() string {
+	return bl.Token.Literal
+}
+func (bl *BlockStatement) String() string {
+	var out strings.Builder
+
+	for _, s := range bl.Statements {
+		out.WriteString(s.String())
+	}
+
+	return out.String()
+}
+
+type BlockStatement struct {
+	Token      token.Token
+	Statements []Statement
+}
+
 type Identifier struct {
 	Token token.Token
 	Value string
@@ -73,12 +114,13 @@ type InfixExpression struct {
 	Operator string
 }
 
-type Boolean struct{
-    Token token.Token
-    Value bool
+type Boolean struct {
+	Token token.Token
+	Value bool
 }
+
 func (es *ExpressionStatement) state()               {}
-func (es *ExpressionStatement) express()               {}
+func (es *ExpressionStatement) express()             {}
 func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
 func (es *ExpressionStatement) String() string {
 	if es.Expression != nil {
@@ -158,6 +200,6 @@ func (pe *PrefixExpression) String() string {
 
 	return out.String()
 }
-func (b *Boolean) express() {}
+func (b *Boolean) express()             {}
 func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
-func (b *Boolean) String() string { return b.Token.Literal }
+func (b *Boolean) String() string       { return b.Token.Literal }
