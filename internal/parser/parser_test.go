@@ -7,6 +7,65 @@ import (
 	"testing"
 )
 
+func TestFunctionParameterParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{input: "fn() {};", expected: []string{}},
+		{input: "fn(x) {};", expected: []string{"x"}},
+		{input: "fn(x, y, z) {};", expected: []string{"x", "y", "z"}},
+	}
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement)
+		function := stmt.Expression.(*ast.FunctionLiteral)
+		if len(function.Parameters) != len(tt.expected) {
+			t.Errorf("length parameters wrong. want %d, got=%d\n",
+				len(tt.expected), len(function.Parameters))
+		}
+		for i, ident := range tt.expected {
+			testLiteralExpression(t, function.Parameters[i], ident)
+		}
+	}
+}
+
+func TestFunctionLiteralParsing(t *testing.T) {
+	input := `fn(x,y){ x + y;}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("pStatements got wrong num statements expected %d got %d",
+			1,
+			len(program.Statements))
+	}
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program Statements[0] is not a expression got=%T",
+			program.Statements[0])
+	}
+	function, ok := stmt.Expression.(*ast.FunctionLiteral)
+	if !ok {
+		t.Fatalf("expression is not a function got %T", stmt.Expression)
+	}
+	if len(function.Parameters) != 2 {
+		t.Fatalf("wrong Parameters count got=%d", len(function.Parameters))
+	}
+	body, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("body if not a ExpressionStatement got=%T", body)
+	}
+	testInfixExpression(t, body.Expression, "x", "+", "y")
+}
+
 func TestIfElseExpression(t *testing.T) {
 	input := `if(x < y){x}else{z}`
 	l := lexer.New(input)
