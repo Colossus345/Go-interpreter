@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"inter-median/internal/lexer"
-	"inter-median/internal/token"
+	"inter-median/internal/parser"
 	"io"
 )
 
@@ -22,11 +22,22 @@ func Start(in io.Reader, out io.Writer) {
 		}
 		line := scanner.Text()
 		l := lexer.New(line)
+		p := parser.New(l)
+		program := p.ParseProgram()
 
-		for toke := l.NextToken(); toke.Type != token.EOF; toke = l.NextToken() {
-			fmt.Printf("%+v\n", toke)
+		if len(p.Errors()) != 0 {
+			printErrors(out, p.Errors())
+			continue
 		}
+
+		io.WriteString(out, program.String())
+		io.WriteString(out, "\n")
 
 	}
 
+}
+func printErrors(out io.Writer, errors []string){
+    for _,msg :=range errors{
+        io.WriteString(out,"\t"+msg+"\n")
+    }
 }
