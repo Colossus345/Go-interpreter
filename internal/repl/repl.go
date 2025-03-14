@@ -3,6 +3,7 @@ package repl
 import (
 	"bufio"
 	"fmt"
+	"inter-median/internal/evaluator"
 	"inter-median/internal/lexer"
 	"inter-median/internal/parser"
 	"io"
@@ -29,15 +30,17 @@ func Start(in io.Reader, out io.Writer) {
 			printErrors(out, p.Errors())
 			continue
 		}
-
-		io.WriteString(out, program.String())
-		io.WriteString(out, "\n")
+		evaluated := evaluator.Eval(program)
+		if evaluated != nil {
+			io.WriteString(out, program.String())
+			io.WriteString(out, "\n")
+		}
 
 	}
 
 }
-func printErrors(out io.Writer, errors []string){
-    for _,msg :=range errors{
-        io.WriteString(out,"\t"+msg+"\n")
-    }
+func printErrors(out io.Writer, errors []string) {
+	for _, msg := range errors {
+		io.WriteString(out, "\t"+msg+"\n")
+	}
 }
