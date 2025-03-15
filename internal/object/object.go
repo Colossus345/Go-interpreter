@@ -1,6 +1,8 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	NULL_OBJ    = "NULL"
