@@ -3,6 +3,7 @@ package evaluator
 import (
 	"inter-median/internal/ast"
 	"inter-median/internal/object"
+	"log"
 )
 
 var (
@@ -13,21 +14,26 @@ var (
 
 func Eval(node ast.Node) object.Object {
 
+	log.Printf("Node %T", node)
+
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalStatements(node.Statements)
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
+	case *ast.ReturnStatement:
+		val := Eval(node.ReturnValue)
+		return &object.ReturnValue{Value: val}
 	case *ast.InfixExpression:
 		right := Eval(node.Right)
 		left := Eval(node.Left)
 		return evalInfixExpression(node.Operator, left, right)
-    case *ast.BlockStatement:
-        return evalStatements(node.Statements)
-    case *ast.IfExpression:
-        return evalIfExpression(node)
-    case *ast.ExpressionStatement:
+	case *ast.BlockStatement:
+		return evalBlockStatements(node)
+	case *ast.IfExpression:
+		return evalIfExpression(node)
+	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
@@ -39,26 +45,25 @@ func Eval(node ast.Node) object.Object {
 
 }
 
-func evalIfExpression(ie *ast.IfExpression) object.Object{
-    condition := Eval(ie.Condition)
-    if isTruthy(condition){
-        return Eval(ie.Consequence)
-    }else if ie.Alternative!=nil{
-        return Eval(ie.Alternative)
-    }
+func evalIfExpression(ie *ast.IfExpression) object.Object {
+	condition := Eval(ie.Condition)
+	if isTruthy(condition) {
+		return Eval(ie.Consequence)
+	} else if ie.Alternative != nil {
+		return Eval(ie.Alternative)
+	}
 
-    return NULL
+	return NULL
 }
-func isTruthy(obj object.Object) bool{
-    switch obj{
-    case NULL:
-        return false
-    case FALSE:
-        return false
-    }
-    return true
+func isTruthy(obj object.Object) bool {
+	switch obj {
+	case NULL:
+		return false
+	case FALSE:
+		return false
+	}
+	return true
 }
-
 
 func evalInfixExpression(oper string, left, right object.Object) object.Object {
 
@@ -146,6 +151,21 @@ func evalStatements(stmts []ast.Statement) object.Object {
 
 	for _, stmt := range stmts {
 		result = Eval(stmt)
+		if returnValue, ok := result.(*object.ReturnValue); ok {
+			return returnValue.Value
+		}
+	}
+	return result
+}
+
+func evalBlockStatements(block *ast.BlockStatement) object.Object {
+	var result object.Object
+
+	for _, state := range block.Statements {
+		result = Eval(state)
+		if result != nil && result.Type() == object.RETURN_VALUE_OBJ {
+			return result
+		}
 	}
 	return result
 }
