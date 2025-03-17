@@ -7,22 +7,66 @@ import (
 	"testing"
 )
 
-func TestReturnStatements(t * testing.T){
-    tests:=[]struct{
-        input string
-        expected int64
-    }{
-        {"return 10;",10},
-        {"return 10;9;",10},
-        {"return 2*5;",10},
-        {"5; return 2*5;9;",10},
-        {"if(true){  return 9; } return 1;",9},
-        // {"if(true){ if(true){ return 10;} } return 1;",10},
-    }
-    for _,tt := range tests{
-        evaluated := testEval(tt.input)
-        testIntegerObject(t,evaluated,tt.expected)
-    }
+func TestErrorHandling(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"5 + true;", "type mismatch: INTEGER + BOOLEAN"},
+		{"5+ true; 5;", "type mismatch: INTEGER + BOOLEAN"},
+		{"-true", "unknown operator: -BOOLEAN"},
+		{"true + false;", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"foobar", "identifier not found: foobar"},
+		{"if(true){  true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
+		// {"if(true){ if(true){ return 10;} } return 1;",10},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		errObj, ok := evaluated.(*object.Error)
+		if !ok {
+			t.Error(tt.input)
+			t.Errorf("no error object. got=%T(%+v)", evaluated, evaluated)
+			continue
+		}
+		if errObj.Message != tt.expected {
+			t.Errorf("wrong error message. expected=%q, got=%q", tt.expected,
+				errObj.Message)
+		}
+	}
+
+}
+func TestLetStatement(t *testing.T) {
+
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let a = 5; a;", 5},
+		{"let a = 5*5; a;", 25},
+		{"let a = 5; let b = a;b;", 5},
+		{"let a = 5; let b = a; let c = a*b+1; c;", 26},
+	}
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
+	}
+}
+
+func TestReturnStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"return 10;", 10},
+		{"return 10;9;", 10},
+		{"return 2*5;", 10},
+		{"5; return 2*5;9;", 10},
+		{"if(true){  return 9; } return 1;", 9},
+		// {"if(true){ if(true){ return 10;} } return 1;",10},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
 }
 func TestEvalIntegerExpression(t *testing.T) {
 	tests := []struct {
@@ -56,7 +100,8 @@ func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	return Eval(program)
+	env := object.NewEnvironment()
+	return Eval(program, env)
 }
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	result, ok := obj.(*object.Integer)

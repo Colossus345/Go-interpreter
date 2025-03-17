@@ -10,6 +10,7 @@ const (
 
 	RETURN_VALUE_OBJ = "RETURN_VALUE_OBJ"
 	INTEGER_OBJ      = "INTEGER"
+	ERROR_OBJ        = "ERROR"
 )
 
 type ObjectType string
@@ -24,6 +25,12 @@ type Boolean struct {
 type Integer struct {
 	Value int64
 }
+type Error struct {
+	Message string
+}
+
+func (e *Error) Type() ObjectType { return ERROR_OBJ }
+func (e *Error) Inspect() string  { return "ERROR: " + e.Message }
 
 func (b *Integer) Type() ObjectType { return INTEGER_OBJ }
 func (b *Integer) Inspect() string  { return fmt.Sprintf("%d", b.Value) }
