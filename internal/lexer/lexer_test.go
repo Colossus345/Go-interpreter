@@ -13,6 +13,9 @@ let add = fn(x, y) {
 x + y;
 };
 let result = add(five, ten);
+"foobar"
+"foo bar"
+[1,2]
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -54,6 +57,13 @@ let result = add(five, ten);
 		{token.IDENT, "ten"},
 		{token.RPAREN, ")"},
 		{token.SEMICOLON, ";"},
+		{token.STRING, "foobar"},
+		{token.STRING, "foo bar"},
+		{token.LBRACKET, "["},
+		{token.INT, "1"},
+		{token.COMMA, ","},
+		{token.INT, "2"},
+		{token.RBRACKET, "]"},
 		{token.EOF, ""},
 	}
 	l := lexer.New(input)
@@ -174,7 +184,6 @@ return false;
 		{token.INT, "10"},
 		{token.NOT_EQ, "!="},
 		{token.INT, "9"},
-
 
 		{token.INT, "10"},
 		{token.LTE, "<="},

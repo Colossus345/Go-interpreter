@@ -12,10 +12,13 @@ const (
 	BOOLEAN_OBJ = "BOOLEAN"
 
 	FUNCTION_OBJ = "FUNCTION_OBJ"
+	ARRAY_OBJ    = "ARRAY"
 
 	RETURN_VALUE_OBJ = "RETURN_VALUE_OBJ"
 	INTEGER_OBJ      = "INTEGER"
 	ERROR_OBJ        = "ERROR"
+	STRING_OBJ       = "STRING"
+	BUILTIN_OBJ      = "BUILTIN"
 )
 
 type ObjectType string
@@ -23,6 +26,37 @@ type Object interface {
 	Type() ObjectType
 	Inspect() string
 }
+type String struct {
+	Value string
+}
+
+type BuiltinFunction func(args ...Object) Object
+
+type Builtin struct {
+	Fn BuiltinFunction
+}
+type Array struct {
+	Elements []Object
+}
+
+func (a *Array) Type() ObjectType { return ARRAY_OBJ }
+func (a *Array) Inspect() string {
+	var out strings.Builder
+	elements := []string{}
+	for _, e := range a.Elements {
+		elements = append(elements, e.Inspect())
+	}
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", "))
+	out.WriteString("]")
+	return out.String()
+}
+
+func (s *Builtin) Type() ObjectType { return BUILTIN_OBJ }
+func (s *Builtin) Inspect() string  { return "builtin function" }
+
+func (s *String) Type() ObjectType { return STRING_OBJ }
+func (s *String) Inspect() string  { return s.Value }
 
 type Boolean struct {
 	Value bool

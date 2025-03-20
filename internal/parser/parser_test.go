@@ -7,6 +7,63 @@ import (
 	"testing"
 )
 
+func TestParsingIndex(t *testing.T) {
+	input := `arr[1 + 1]`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	indexExp, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("exp not *ast.IndexExpression. got =%T", stmt.Expression)
+	}
+	if !testIdentifier(t, indexExp.Left, "arr") {
+		return
+	}
+	if !testInfixExpression(t, indexExp.Index, 1, "+", 1) {
+		return
+	}
+
+}
+
+func TestParsingArrayLiterals(t *testing.T) {
+	input := `[1,2+1]`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	array, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("exp not ast.ArrayLiteral got %T", stmt.Expression)
+	}
+	if len(array.Elements) != 2 {
+		t.Fatalf("len(array) not 2, got=%d", len(array.Elements))
+	}
+
+	testIntegerLiteral(t, array.Elements[0], 1)
+	testInfixExpression(t, array.Elements[1], 2, "+", 1)
+
+}
+func TestStringLiteral(t *testing.T) {
+	input := `"hello world"`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+
+	literal, ok := stmt.Expression.(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.StringLiteral got=%T", stmt.Expression)
+	}
+	if literal.Value != "hello world" {
+		t.Fatalf("value is not hello world got=%s", literal.Value)
+	}
+}
+
 func TestCallExpressionParsing(t *testing.T) {
 	input := "add(1, 2 * 3, 4 + 5);"
 	l := lexer.New(input)

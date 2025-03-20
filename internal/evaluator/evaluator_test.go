@@ -7,6 +7,76 @@ import (
 	"testing"
 )
 
+func TestArrayLiteral(t *testing.T) {
+	input := "[1,2*2]"
+	evaluated := testEval(input)
+	result, ok := evaluated.(*object.Array)
+	if !ok {
+		t.Fatalf("object is not Array got=%T (%+v)", evaluated, evaluated)
+	}
+	if len(result.Elements) != 2 {
+		t.Fatalf("array has wrong num of elements. got=%d", len(result.Elements))
+	}
+	testIntegerObject(t, result.Elements[0], 1)
+	testIntegerObject(t, result.Elements[1], 4)
+}
+
+func TestBuiltinFunctions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("hello")`, 5},
+		{`len(1)`, "argument to `len` not supported got INTEGER"},
+		{`len("1",2)`, "wrong number of arguments. got=2, want=1"},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case string:
+			errObj, ok := evaluated.(*object.Error)
+			if !ok {
+				t.Errorf("object is not Error got=%T (%+v)", evaluated, evaluated)
+				continue
+			}
+			if errObj.Message != expected {
+				t.Errorf("wrong error message. expected=%q got=%q", expected,
+					errObj.Message)
+			}
+		}
+
+	}
+}
+func TestStringConcatenation(t *testing.T) {
+	input := `"Hello" + " world"`
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("object is not String. got=%T", evaluated)
+	}
+	if str.Value != "Hello world" {
+		t.Fatalf("String has wrong value got=%q", str.Value)
+	}
+
+}
+
+func TestStringLiteral(t *testing.T) {
+	input := `"Hello world"`
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("object is not String. got=%T", evaluated)
+	}
+	if str.Value != "Hello world" {
+		t.Fatalf("String has wrong value got=%q", str.Value)
+	}
+}
 func TestFunctionApplication(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -54,6 +124,7 @@ func TestErrorHandling(t *testing.T) {
 		{"true + false;", "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
 		{"if(true){  true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
+		{`"Hello" - "str"`, "unknown operator: STRING - STRING"},
 		// {"if(true){ if(true){ return 10;} } return 1;",10},
 	}
 	for _, tt := range tests {
