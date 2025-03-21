@@ -3,9 +3,42 @@ package evaluator
 import (
 	"fmt"
 	"inter-median/internal/object"
+	"os"
 )
 
 var builtins = map[string]*object.Builtin{
+	"puts": &object.Builtin{
+		Fn: func(args ...object.Object) object.Object {
+			for _, arg := range args {
+				fmt.Println(arg.Inspect())
+			}
+			return NULL
+
+		},
+	},
+	"fputs": &object.Builtin{
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) < 2 {
+				return newError("wrong number of arguments. got=%d, want at least 2", len(args))
+			}
+			if args[0].Type() != object.STRING_OBJ {
+				return newError("first parameter must be PATH string. got=%s", args[0].Type())
+			}
+			file, err := os.OpenFile(args[0].Inspect(),
+				os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+			defer file.Close()
+			if err != nil {
+				return newError("Open file error:%s", err)
+			}
+			prnt := []interface{}{}
+			for i := 1; i < len(args); i++ {
+				prnt = append(prnt, args[i].Inspect())
+			}
+
+			fmt.Fprintln(file, prnt...)
+			return NULL
+		},
+	},
 	"len": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
