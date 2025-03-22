@@ -21,6 +21,7 @@ const (
 	PREFIX
 	CALL
 	INDEX
+	ASSIGN
 )
 
 var precedences = map[token.TokenType]int{
@@ -37,6 +38,7 @@ var precedences = map[token.TokenType]int{
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
 	token.LBRACKET: INDEX,
+	token.ASSIGN:   ASSIGN,
 }
 
 type (
@@ -64,6 +66,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 
 	p.registerPrefix(token.IF, p.parseIfExpression)
+	p.registerPrefix(token.WHILE, p.parseWhileExpression)
 	p.registerPrefix(token.LBRACE, p.parseHashLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
@@ -79,6 +82,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
+	p.registerInfix(token.ASSIGN, p.parseAssignExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
@@ -155,6 +159,15 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
 }
 
+func (p *Parser) parseAssignExpression(left ast.Expression) ast.Expression {
+	if _, ok := left.(*ast.Identifier); !ok {
+		return nil
+	}
+	p.nextToken()
+	// println(">>>>", p.curToken.Literal)
+
+	return &ast.AssignExpression{Left: left.(*ast.Identifier), Right: p.parseExpression(LOWEST)}
+}
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	exp := &ast.CallExpression{Token: p.curToken, Function: function}
 	exp.Arguments = p.parseExpressionList(token.RPAREN)
@@ -195,6 +208,26 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 		return nil
 	}
 	return identifiers
+}
+func (p *Parser) parseWhileExpression() ast.Expression {
+	expression := &ast.WhileExpression{Token: p.curToken}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken()
+	expression.Condition = p.parseExpression(LOWEST)
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	expression.Consequence = p.parseBlockStatement()
+
+	return expression
 }
 func (p *Parser) parseIfExpression() ast.Expression {
 	expression := &ast.IfExpression{Token: p.curToken}

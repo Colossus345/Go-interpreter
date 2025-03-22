@@ -7,6 +7,26 @@ import (
 	"testing"
 )
 
+func TestAssign(t *testing.T) {
+	input := `let a =3;
+    a = 5
+    a;`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	stmt := program.Statements[1].(*ast.ExpressionStatement)
+	exp := stmt.Expression.(*ast.AssignExpression)
+
+	if exp.Left.String() != "a" {
+		t.Fatalf("expect a as identifier")
+	}
+    if exp.Right.String()!="5"{
+        t.Fatalf("expect 5 got %s",exp.Right.String())
+    }
+
+}
+
 func TestParsingHashLiteralsStringKeys(t *testing.T) {
 	input := `{"one": 1, "two": 2, "three": 3}`
 	l := lexer.New(input)
@@ -257,6 +277,43 @@ func TestIfElseExpression(t *testing.T) {
 	}
 	if exp.Alternative == nil {
 		t.Fatalf("exp.Alternative is nil")
+	}
+
+}
+func TestWhileExpression(t *testing.T) {
+	input := `while(x < y){x}`
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Body does not contain %d statements got=%d", 1,
+			len(program.Statements))
+	}
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program is not EXpression got=%T", program.Statements[0])
+	}
+	exp, ok := stmt.Expression.(*ast.WhileExpression)
+	if !ok {
+		t.Fatalf("program is not ifExpression got=%T", stmt.Expression)
+	}
+	if !testInfixExpression(t, exp.Condition, "x", "<", "y") {
+		return
+	}
+
+	if len(exp.Consequence.Statements) != 1 {
+		t.Errorf("Consequence is not 1. got %d", len(exp.Consequence.Statements))
+	}
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Statement[0] is not an ast.ExpressionStatement, got=%T",
+			exp.Consequence.Statements[0])
+	}
+	if !testIdentifier(t, consequence.Expression, "x") {
+		return
 	}
 
 }

@@ -16,6 +16,7 @@ let result = add(five, ten);
 "foobar"
 "foo bar"
 [1,2]
+while (true) { x;}
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -64,6 +65,14 @@ let result = add(five, ten);
 		{token.COMMA, ","},
 		{token.INT, "2"},
 		{token.RBRACKET, "]"},
+		{token.WHILE, "while"},
+		{token.LPAREN, "("},
+		{token.TRUE, "true"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+        {token.IDENT,"x"},
+        {token.SEMICOLON,";"},
+		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	}
 	l := lexer.New(input)

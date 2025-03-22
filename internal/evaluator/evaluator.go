@@ -80,6 +80,12 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.BlockStatement:
 		return evalBlockStatements(node, env)
+    case *ast.AssignExpression:
+		val := Eval(node.Right, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Left.Value, val)
 	case *ast.LetStatement:
 		val := Eval(node.Value, env)
 		if isError(val) {
@@ -88,6 +94,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		env.Set(node.Name.Value, val)
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
+    case *ast.WhileExpression:
+        return evalWhileExpression(node,env)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
 	case *ast.IntegerLiteral:
@@ -175,6 +183,18 @@ func newError(format string, a ...interface{}) *object.Error {
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
 
+func evalWhileExpression(ie *ast.WhileExpression, env *object.Environment) object.Object {
+	condition := Eval(ie.Condition, env)
+	if isError(condition) {
+		return condition
+	}
+    var result object.Object
+	for isTruthy(condition) {
+		result = Eval(ie.Consequence, env)
+        condition = Eval(ie.Condition,env)
+	} 
+	return result
+}
 func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
 	condition := Eval(ie.Condition, env)
 	if isError(condition) {
