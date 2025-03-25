@@ -1,8 +1,8 @@
 package lexer_test
 
 import (
-	"inter-median/internal/lexer"
-	"inter-median/internal/token"
+	"github.com/Colossus345/Go-interpreter/internal/lexer"
+	"github.com/Colossus345/Go-interpreter/internal/token"
 	"testing"
 )
 

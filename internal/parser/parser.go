@@ -2,9 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"inter-median/internal/ast"
-	"inter-median/internal/lexer"
-	"inter-median/internal/token"
+	"github.com/Colossus345/Go-interpreter/internal/ast"
+	"github.com/Colossus345/Go-interpreter/internal/lexer"
+	"github.com/Colossus345/Go-interpreter/internal/token"
 	"log"
 	"reflect"
 	"runtime"

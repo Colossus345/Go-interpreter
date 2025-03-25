@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"inter-median/internal/repl"
+	"github.com/Colossus345/Go-interpreter/internal/repl"
 	"os"
 	"os/user"
 )

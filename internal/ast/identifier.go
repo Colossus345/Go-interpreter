@@ -1,6 +1,6 @@
 package ast
 
-import "inter-median/internal/token"
+import "github.com/Colossus345/Go-interpreter/internal/token"
 
 type Identifier struct {
 	Token token.Token

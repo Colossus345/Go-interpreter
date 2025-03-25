@@ -2,8 +2,8 @@ package parser
 
 import (
 	"fmt"
-	"inter-median/internal/ast"
-	"inter-median/internal/lexer"
+	"github.com/Colossus345/Go-interpreter/internal/ast"
+	"github.com/Colossus345/Go-interpreter/internal/lexer"
 	"testing"
 )
 

@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"inter-median/internal/token"
+	"github.com/Colossus345/Go-interpreter/internal/token"
 )
 
 type Lexer struct {

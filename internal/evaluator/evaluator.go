@@ -2,8 +2,8 @@ package evaluator
 
 import (
 	"fmt"
-	"inter-median/internal/ast"
-	"inter-median/internal/object"
+	"github.com/Colossus345/Go-interpreter/internal/ast"
+	"github.com/Colossus345/Go-interpreter/internal/object"
 )
 
 var (

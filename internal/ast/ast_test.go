@@ -1,7 +1,7 @@
 package ast
 
 import (
-	"inter-median/internal/token"
+	"github.com/Colossus345/Go-interpreter/internal/token"
 	"testing"
 )
 

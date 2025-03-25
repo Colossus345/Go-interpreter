@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"hash/fnv"
-	"inter-median/internal/ast"
+	"github.com/Colossus345/Go-interpreter/internal/ast"
 	"strings"
 )
 

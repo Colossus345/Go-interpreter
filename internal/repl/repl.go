@@ -3,10 +3,10 @@ package repl
 import (
 	"bufio"
 	"fmt"
-	"inter-median/internal/evaluator"
-	"inter-median/internal/lexer"
-	"inter-median/internal/object"
-	"inter-median/internal/parser"
+	"github.com/Colossus345/Go-interpreter/internal/evaluator"
+	"github.com/Colossus345/Go-interpreter/internal/lexer"
+	"github.com/Colossus345/Go-interpreter/internal/object"
+	"github.com/Colossus345/Go-interpreter/internal/parser"
 	"io"
 )
 
