@@ -1,4 +1,4 @@
-package export
+package interpreter
 
 import (
 	"fmt"
@@ -29,14 +29,17 @@ func Compile(s string) (Program, error) {
 	return program, nil
 }
 
-func Exec(p Program, args ...string) (string, error) {
-	arr := &object.Array{}
-	for _, a := range args {
-		arr.Elements = append(arr.Elements, StringToString(a))
+func Exec(p Program, args map[string]interface{}) (string, error) {
+	arr := &object.Hash{Pairs: make(map[object.HashKey]object.HashPair)}
+	for key, val := range args {
+		strObj := StringToString(key)
+		arr.Pairs[strObj.HashKey()] = object.HashPair{Key: strObj, Value: InterfaceToObject(val)}
 
 	}
 	env := object.NewEnvironment()
-	env.Set("__args__", arr)
+	for _, val := range arr.Pairs {
+		env.Set(val.Key.Inspect(), val.Value)
+	}
 	obj := evaluator.Eval((*ast.Program)(p), env)
 	if obj.Type() != object.STRING_OBJ {
 		return "", fmt.Errorf("wrong return type")
@@ -46,4 +49,16 @@ func Exec(p Program, args ...string) (string, error) {
 
 func StringToString(s string) *object.String {
 	return &object.String{Value: s}
+}
+func InterfaceToObject(inter interface{}) object.Object {
+	switch v := inter.(type) {
+	case int:
+		return &object.Integer{Value: int64(v)}
+	case string:
+		return &object.String{Value: v}
+	case bool:
+		return &object.Boolean{Value: v}
+	default:
+		return nil
+	}
 }
